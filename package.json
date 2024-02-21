@@ -1,0 +1,17 @@
+{
+  "name": "backend-fundamentals",
+  "version": "1.0.0",
+  "description": "Learning Backend ",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "Backend"
+  ],
+  "author": "Y Samanvith Reddy",
+  "license": "ISC",
+  "devDependencies": {
+    "prettier": "^3.2.5"
+  }
+}
