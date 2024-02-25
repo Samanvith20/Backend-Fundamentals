@@ -50,7 +50,7 @@ import mongoose from "mongoose";
  //JWT tokens are used for generating secure tokens containing user information for authentication and authorization purposes,
  // while bcrypt is used for securely hashing passwords to protect user credentials in the database.
 
- 
+
 // Define a pre-save hook for the user schema
 userSchema.pre("save", async function (next) {
     // Check if the password field has been modified
@@ -79,33 +79,37 @@ userSchema.methods.isPasswordCorrect = async function (password) {
     }
 }
 
-userSchema.methods.generateAccessToken= function (){
+// Method to generate an access token for a user
+userSchema.methods.generateAccessToken = function () {
+    // Sign the JWT token with user-specific information as payload
     return jwt.sign(
         {
-            _id: this._id,
-            email: this.email,
-            username: this.username,
-            fullName: this.fullName
+            _id: this._id,                  // User's unique identifier
+            email: this.email,              // User's email address
+            username: this.username,        // User's username
+            fullName: this.fullName         // User's full name
         },
-        process.env.ACCESS_TOKEN_SECRET,
+        process.env.ACCESS_TOKEN_SECRET,    // Secret key used to sign the token
         {
-            expiresIn: process.env.ACCESS_TOKEN_EXPIRY
+            expiresIn: process.env.ACCESS_TOKEN_EXPIRY   // Expiration time for the token
         }
-    )
-}
+    );
+};
 
-userSchema.methods.generateRefreshToken = function(){
+// Method to generate a refresh token for a user
+userSchema.methods.generateRefreshToken = function () {
+    // Sign the JWT token with user's unique identifier as payload
     return jwt.sign(
         {
-            _id: this._id,
-            
+            _id: this._id,                  // User's unique identifier
         },
-        process.env.REFRESH_TOKEN_SECRET,
+        process.env.REFRESH_TOKEN_SECRET,   // Secret key used to sign the token
         {
-            expiresIn: process.env.REFRESH_TOKEN_EXPIRY
+            expiresIn: process.env.REFRESH_TOKEN_EXPIRY  // Expiration time for the token
         }
-    )
-}
+    );
+};
+
 
 
 
