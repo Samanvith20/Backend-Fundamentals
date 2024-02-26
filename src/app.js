@@ -25,9 +25,12 @@ app.use(cookieParser());
 
 // import routes
 import userRouter from "./routes/user.routes.js"
+//userRouter is just a variable name you choose to represent the router you imported from the user.routes.js file. 
 
 //  routes  declaration
 app.use("/api/v1/users", userRouter)
+// Mounting the userRouter to handle routes under the '/api/v1/users' path.
+// app.use() is a middleware function used to mount middleware or sub-applications to specified paths.
 
 
 export default app; 
