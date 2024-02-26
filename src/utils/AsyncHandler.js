@@ -1,16 +1,22 @@
 // Define a middleware function called AsyncHandler that handles asynchronous operations
-const AsyncHandler = async (HandlerRequest) => {
-    try {
-        // Await the completion of the handler function and pass req, res, and next to it
-        await HandlerRequest(req, res, next);
-    } catch (error) {
-        // If an error occurs, handle it by sending an appropriate response
-        res.status(err.code || 500).json({
-            success: false,
-            message: err.message
-        });
-    }
+const AsyncHandler = (HandlerRequest) => {
+    // Return a function that will act as the middleware
+    return async (req, res, next) => {
+        try {
+            // Await the completion of the handler function and pass req, res, and next to it
+            await HandlerRequest(req, res, next);
+        } catch (error) {
+            // If an error occurs, handle it by sending an appropriate response
+            res.status(error.code || 500).json({
+                success: false,
+                message: error.message
+            });
+        }
+    };
 };
+
+
+
 
 // Export the AsyncHandler middleware function
 export default AsyncHandler;
