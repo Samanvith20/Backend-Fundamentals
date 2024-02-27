@@ -2,11 +2,13 @@
 import AsyncHandler from "../utils/AsyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.models.js";
+import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
 // Define a handler function for registering a new user
 const registerUser = AsyncHandler(async (req, res) => {
     // Destructure user details from the request body
     const { email, username, password, fullName } = req.body;
+    console.log("userdetails:",password);
 
     // Validate if any of the required fields are empty
     if ([fullName, email, username, password].some((field) => field?.trim() === "")) {
@@ -38,7 +40,11 @@ const registerUser = AsyncHandler(async (req, res) => {
 
     // Retrieve local paths of avatar and cover image files from the request
     const avatarLocalPath = req.files?.avatar[0]?.path;
-    const coverImageLocalPath = req.files?.coverImage[0]?.path;
+    const coverImageLocalPath = req.files?.coverImage?.[0]?.path || null;
+    // let coverImageLocalPath;
+    // if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) {
+    //     coverImageLocalPath = req.files.coverImage[0].path
+    // }
 
     // Validate if avatar file is provided
     if (!avatarLocalPath) {
@@ -80,5 +86,5 @@ const registerUser = AsyncHandler(async (req, res) => {
     });
 });
 
-// Export the registerUser handler function
+
 export default registerUser;
