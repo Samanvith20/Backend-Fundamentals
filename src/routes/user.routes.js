@@ -1,6 +1,7 @@
 import { Router } from "express";
 import registerUser from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
+import { verifyJWT } from "../middlewares/auth_middleware.js";
 const router= Router()
 // routes 
 // Define a route for handling POST requests to '/register'
@@ -15,11 +16,14 @@ router.route("/register").post(
         },
         {
             name: "coverImage",   // Name of the field for cover image files
-            maxCount: 3           // Maximum number of files allowed for cover image
+            maxCount: 1          // Maximum number of files allowed for cover image
         }
     ]),
     // Handler function 'registerUser' to process the registration logic after file uploads.
     registerUser
 );
+router.route("/login").post(loginUser)
 
+//secured routes
+router.route("/logout").post(verifyJWT,  logoutUser)
  export default router
