@@ -274,6 +274,7 @@ const currentUser= AsyncHandler(async(req,res)=>{
         req.user,
         "User fetched successfully"))
 })
+// function to update users details
 const updateUserDetails = AsyncHandler(async (req, res) => {
     // Extract username and email from the request body
     const { username, email } = req.body;
@@ -367,14 +368,89 @@ const updateCoverImage = AsyncHandler(async (req, res) => {
     // Send a success response
     return res.status(200).json(new ApiResponse(200, user, "Cover image updated successfully"));
 });
+const getUserChannelProfile = AsyncHandler(async (req, res) => {
+    const { username } = req.params;
+
+    // Check if username is provided
+    if (!username?.trim()) {
+        throw new ApiError(400, "Username is missing");
+    }
+
+    try {
+        const channel = await User.aggregate([
+            {
+                $match: {
+                    // Match the username in a case-insensitive manner
+                    username: username?.toLowerCase()
+                }
+            },
+            {
+                // $lookup stages are used to perform a left outer join with the Subscriptions collection. 
+                $lookup: {
+                    from: "Subscriptions",
+                    localField: "_id",
+                    foreignField: "subscriber",
+                    as: "subscribes"
+                }
+            },
+            {
+                $lookup: {
+                    from: "Subscriptions",
+                    localField: "_id",
+                    foreignField: "channel",
+                    as: "subscribedTo"
+                }
+            },
+            {
+                //$addFields stage is used to add computed fields to the documents:
+                $addFields: {
+                    // Count the number of subscribers
+                    subscribersCount: { $size: "$subscribes" },
+                    // Count the number of channels subscribed to
+                    channelsSubscribedToCount: { $size: "$subscribedTo" },
+                    // Check if the user is subscribed to the channel
+                    isSubscribed: {
+                        $cond: {
+                            if: {
+                                $in: [req.user?._id, "$subscribes.subscriber"]
+                            },
+                            then: true,
+                            else: false
+                        }
+                    }
+                }
+            },
+            {
+      
+                $project: {   // The $project stage is used to include or exclude fields from the output document.
+                    fullName: 1,
+                    username: 1,
+                    subscribersCount: 1,
+                    channelsSubscribedToCount: 1,
+                    isSubscribed: 1,
+                    avatar: 1,
+                    coverImage: 1,
+                    email: 1
+                }
+            }
+        ]);
+        
+    if (!channel?.length) {
+        throw new ApiError(404, "channel does not exists")
+    }
+
+        // Send the channel data in the response
+        return res
+    .status(200)
+    .json(
+        new ApiResponse(200, channel[0], "User channel fetched successfully")
+    )
+    } catch (error) {
+        // Handle any errors that occur during aggregation
+        console.error(error);
+        throw new ApiError(500, "Internal Server Error");
+    }
+});
 
 
-
-
-
-
-
-   
-   
-
-export  {registerUser,loginUser,logoutUser,refreshAccessToken,passwordChange,currentUser,updateUserDetails,updateUserAvatar,updateCoverImage}
+export  {registerUser,loginUser,logoutUser,refreshAccessToken,passwordChange,currentUser,updateUserDetails,updateUserAvatar,updateCoverImage,getUserChannelProfile}
