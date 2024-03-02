@@ -4,6 +4,7 @@ import { User } from "../models/user.models.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import  {ApiResponse } from "../utils/ApiResponse.js"
 import  jwt  from "jsonwebtoken";
+import mongoose from "mongoose";
 const generateAccessAndRefereshTokens = async(userId) => {
     try {
       // Retrieve user from the database
@@ -245,7 +246,7 @@ const passwordChange = AsyncHandler(async (req, res) => {
     const { oldpassword, newpassword } = req.body;
 
     // Find the user by their ID
-    const user = User.findById(user?._id); // Finding the user by their ID
+    const user = await User.findById(req.user._id); // Finding the user by their ID
 
     // Check if the old password is correct
     const isPasswordCorrect = user.isPasswordCorrect(oldpassword); // Verifying the old password
@@ -265,15 +266,10 @@ const passwordChange = AsyncHandler(async (req, res) => {
     return res.status(200).json(new ApiResponse(200, {}, "Password changed successfully"));
 });
 
-const currentUser= AsyncHandler(async(req,res)=>{
-     return res.status(200).json
-     (
-        new ApiResponse
-        (
-        200,
-        req.user,
-        "User fetched successfully"))
-})
+const currentUser = AsyncHandler(async(req, res) => {
+    return res.status(200).json(new ApiResponse(200, req.user, "User fetched successfully"));
+});
+
 // function to update users details
 const updateUserDetails = AsyncHandler(async (req, res) => {
     // Extract username and email from the request body
@@ -316,13 +312,13 @@ const updateUserAvatar = AsyncHandler(async (req, res) => {
      const user1 = await User.findById(req.user?._id);
      const oldAvatarUrl = user1.avatar;
        // Delete the old avatar from Cloudinary if it exists
-    if (oldAvatarUrl) {
-        // Extract the public ID from the old avatar URL
-        const publicId = extractPublicId(oldAvatarUrl);
+    // if (oldAvatarUrl) {
+    //     // Extract the public ID from the old avatar URL
+    //     const publicId = extractPublicId(oldAvatarUrl);
         
-        // Delete the old avatar from Cloudinary
-        await deleteFromCloudinary(publicId);
-    }
+    //     // Delete the old avatar from Cloudinary
+    //     await deleteFromCloudinary(publicId);
+    // }
 
     // Upload the avatar file to Cloudinary
     const avatar = await uploadOnCloudinary(avatarLocalPath);
@@ -475,7 +471,7 @@ const getUserChannelProfile = AsyncHandler(async (req, res) => {
     }
 });
 
-const getWatchHistory = asyncHandler(async(req, res) => {
+const getWatchHistory = AsyncHandler(async(req, res) => {
     // Retrieve the user's watch history using aggregation pipeline
     const user = await User.aggregate([
         {
