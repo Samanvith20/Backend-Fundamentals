@@ -312,6 +312,17 @@ const updateUserAvatar = AsyncHandler(async (req, res) => {
     if (!avatarLocalPath) {
         throw new ApiError(400, "Avatar file is missing");
     }
+     // Retrieve the old avatar URL from the user document
+     const user1 = await User.findById(req.user?._id);
+     const oldAvatarUrl = user1.avatar;
+       // Delete the old avatar from Cloudinary if it exists
+    if (oldAvatarUrl) {
+        // Extract the public ID from the old avatar URL
+        const publicId = extractPublicId(oldAvatarUrl);
+        
+        // Delete the old avatar from Cloudinary
+        await deleteFromCloudinary(publicId);
+    }
 
     // Upload the avatar file to Cloudinary
     const avatar = await uploadOnCloudinary(avatarLocalPath);
@@ -345,6 +356,18 @@ const updateCoverImage = AsyncHandler(async (req, res) => {
     if (!userLocalPath) {
         throw new ApiError(400, "Cover image file was missing");
     }
+      // Retrieve the old avatar URL from the user document
+    const user1 = await User.findById(req.user?._id);
+    const oldCoverImageUrl = user1.avatar;
+// Delete the old avatar from Cloudinary if it exists
+if (oldCoverImageUrl) {
+    // Extract the public ID from the old avatar URL
+    const publicId = extractPublicId(oldCoverImageUrl);
+    
+    // Delete the old avatar from Cloudinary
+    await deleteFromCloudinary(publicId);
+}
+     
 
     // Upload the cover image file to Cloudinary
     const coverImage = await uploadOnCloudinary(userLocalPath);
@@ -388,11 +411,11 @@ const getUserChannelProfile = AsyncHandler(async (req, res) => {
                 // $lookup stages are used to perform a left outer join with the Subscriptions collection. 
                 $lookup: {
                     from: "Subscriptions",
-                    localField: "_id",
-                    foreignField: "subscriber",
-                    as: "subscribes"
+                    localField: "_id",  //local collection that you want to use for matching with documents in the foreign collection.
+                    foreignField: "subscriber", // foreign collection that you want to use for matching with documents in the local collection.
+                    as: "subscribes"  // Output array field where the matched orders will be stored
                 }
-            },
+             },
             {
                 $lookup: {
                     from: "Subscriptions",
@@ -452,5 +475,78 @@ const getUserChannelProfile = AsyncHandler(async (req, res) => {
     }
 });
 
+const getWatchHistory = asyncHandler(async(req, res) => {
+    // Retrieve the user's watch history using aggregation pipeline
+    const user = await User.aggregate([
+        {
+            // Match the user by their ID
+            $match: {
+                _id: new mongoose.Types.ObjectId(req.user._id)
+            }
+        },
+        {
+            // Perform a lookup to fetch videos from the 'videos' collection
+            $lookup: {
+                from: "videos",
+                localField: "watchHistory", // Field in the 'users' collection
+                foreignField: "_id", // Field in the 'videos' collection
+                as: "watchHistory", // Store the matched videos in 'watchHistory' array
+                pipeline: [
+                    {
+                        // Perform a lookup to fetch the owner details from the 'users' collection
+                        $lookup: {
+                            from: "users",
+                            localField: "owner", // Field in the 'videos' collection
+                            foreignField: "_id", // Field in the 'users' collection
+                            as: "owner", // Store the matched user details in 'owner' array
+                            pipeline: [
+                                {
+                                    // Project only necessary fields of the owner
+                                    $project: {
+                                        fullName: 1,
+                                        username: 1,
+                                        avatar: 1
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        // Add a new field 'owner' to the video object with the first matched owner details
+                        $addFields:{
+                            owner:{
+                                $first: "$owner"
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    ]);
 
-export  {registerUser,loginUser,logoutUser,refreshAccessToken,passwordChange,currentUser,updateUserDetails,updateUserAvatar,updateCoverImage,getUserChannelProfile}
+    // Respond with a JSON object containing the watch history
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            user[0].watchHistory, // Extract the watch history from the user object
+            "Watch history fetched successfully"
+        )
+    );
+});
+
+
+export  {
+    registerUser,
+    loginUser,
+    logoutUser,
+    refreshAccessToken,
+    passwordChange,
+    currentUser,
+    updateUserDetails,
+    updateUserAvatar,
+    updateCoverImage,
+    getUserChannelProfile,
+    getWatchHistory
+}

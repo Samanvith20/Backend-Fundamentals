@@ -30,8 +30,9 @@ router.route("/refresh-token").post(refreshAccessToken)
 router.route("/change-password").post(verifyJWT, passwordChange)
 router.route("/current-user").get(verifyJWT, currentUser)
 router.route("/update-account").patch(verifyJWT, updateUserDetails)
-
+//The PATCH method in HTTP is used to apply partial modifications to a resource.
 router.route("/avatar").patch(verifyJWT, upload.single("avatar"), updateUserAvatar)
 router.route("/cover-image").patch(verifyJWT, upload.single("coverImage"), updateCoverImage)
 router.route("/c/:username").get(verifyJWT, getUserChannelProfile)
+router.route("/history").get(verifyJWT, getWatchHistory)
  export default router
